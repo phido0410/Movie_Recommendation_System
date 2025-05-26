@@ -79,34 +79,6 @@ Movie_Recommendation_System/
     ├── pic4.jpg
     └── pic5.jpg
 ```
-
-Movie_Recommendation_System/
-├── data_preprocessing.ipynb         # Tiền xử lý dữ liệu
-├── requirements.txt                 # Danh sách thư viện
-├── Data/                            # Dữ liệu gốc
-│   ├── Data_Movies.csv
-│   ├── Data_Movies_ok.csv
-│   └── Data_VN_2021.xlsx
-├── Pic/                             # Hình ảnh giao diện
-└── movie_recomender/               # Ứng dụng Flask chính
-    ├── app.py                       # Chạy server Flask
-    ├── recommender.py               # Xử lý logic đề xuất
-    ├── matrix_loader.py             # Tải ma trận tương đồng
-    ├── data/
-    │   ├── Data_Movies_ok.csv
-    │   └── similarity_matrix.npz
-    ├── static/
-    │   ├── style.css
-    │   ├── favicon.ico
-    │   └── posters/
-    └── templates/
-        ├── index.html
-        ├── recommendations.html
-        ├── trending.html
-        ├── top_rated.html
-        └── about.html
-```
-
 ---
 
 ## 🧩 Quy trình hoạt động

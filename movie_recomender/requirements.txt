@@ -28,3 +28,7 @@ Flask-Caching>=1.10.0
 
 # Debug và phát triển
 Werkzeug>=2.0.0
+# Thư viện bổ sung
+gdown>=4.5.0         # Tải file từ Google Drive
+scipy>=1.7.0         # Xử lý sparse matrix
+gunicorn>=20.1.0 

@@ -216,5 +216,6 @@ def favicon():
                               'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
 if __name__ == '__main__':
-    # Chạy app với port tùy chỉnh
-    app.run(debug=True, host='0.0.0.0', port=app.config['PORT'])
+    # Lấy PORT từ biến môi trường (Render sẽ cung cấp)
+    port = int(os.environ.get('PORT', app.config['PORT']))
+    app.run(debug=False, host='0.0.0.0', port=port)

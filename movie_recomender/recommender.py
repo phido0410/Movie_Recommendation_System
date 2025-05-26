@@ -165,14 +165,28 @@ class MovieRecommender:
     
     def _load_or_compute_similarity_matrix(self):
         """Kiểm tra nếu ma trận đã tồn tại thì load, nếu không thì tính và lưu"""
-        # Thử load ma trận từ local hoặc Google Drive
-        similarity = self._load_similarity_matrix()
+        # Khi chạy trên Render, ưu tiên load từ Google Drive
+        if os.environ.get('RENDER', '0') == '1':
+            similarity = self._load_from_gdrive()
+            if similarity is not None and similarity.shape[0] == len(self.movies_df):
+                return similarity
+        else:
+            # Thử load ma trận từ local trước
+            if os.path.exists(self.similarity_matrix_path):
+                try:
+                    sparse_matrix = sparse.load_npz(self.similarity_matrix_path)
+                    similarity = sparse_matrix.toarray()
+                    print(f"Similarity matrix loaded from local file: {self.similarity_matrix_path}")
+                    return similarity
+                except Exception as e:
+                    print(f"Error loading local similarity matrix: {str(e)}")
+            
+            # Nếu không tải được hoặc kích thước không khớp, tính toán lại
+            similarity = self._load_from_gdrive()
+            if similarity is not None and similarity.shape[0] == len(self.movies_df):
+                return similarity
         
-        # Kiểm tra xem ma trận có hợp lệ và kích thước phù hợp không
-        if similarity is not None and similarity.shape[0] == len(self.movies_df):
-            return similarity
-                
-        # Nếu không tải được hoặc kích thước không khớp, tính toán lại
+        # Nếu không thể tải từ Google Drive, tính toán lại
         similarity = self._compute_similarity_matrix()
         self._save_similarity_matrix(similarity)
         return similarity

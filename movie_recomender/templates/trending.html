@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phim Xu Hướng | CineMatch</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@400;500;600;700&family=Oswald:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+</head>
+<body class="dark-mode">
+    <!-- Header & Navigation -->
+    <header class="site-header">
+        <div class="container">
+            <nav class="navbar navbar-expand-lg navbar-dark">
+                <div class="container-fluid">
+                    <a class="navbar-brand" href="/">
+                        <i class="fas fa-film me-2 pulse"></i>CineMatch
+                    </a>
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div class="collapse navbar-collapse" id="navbarNav">
+                        <ul class="navbar-nav ms-auto">
+                            <li class="nav-item">
+                                <a class="nav-link {{ 'active' if active_page == 'home' else '' }}" href="/">
+                                    <i class="fas fa-home me-1"></i> Trang chủ
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ 'active' if active_page == 'trending' else '' }}" href="/trending">
+                                    <i class="fas fa-fire me-1"></i> Xu hướng
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ 'active' if active_page == 'top_rated' else '' }}" href="/top-rated">
+                                    <i class="fas fa-star me-1"></i> Đánh giá cao
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ 'active' if active_page == 'about' else '' }}" href="/about">
+                                    <i class="fas fa-info-circle me-1"></i> Giới thiệu
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="container">
+            <h1 class="display-4 animate__animated animate__fadeIn">
+                <i class="fas fa-fire me-2"></i> Phim Xu Hướng
+            </h1>
+            <p class="lead text-muted animate__animated animate__fadeIn animate__delay-1s">
+                Những bộ phim đang được yêu thích và thảo luận nhiều nhất hiện nay
+            </p>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container main-content">
+        {% if trending_movies and trending_movies|length > 0 %}
+        <div class="movie-grid-large">
+            {% for movie in trending_movies %}
+            <div class="movie-card-item" data-aos="fade-up" data-aos-delay="{{ loop.index * 50 }}">
+                <div class="movie-poster-container">
+                    <div class="movie-stats">
+                        <div class="movie-rank trend-rank">{{ loop.index }}</div>
+                    </div>
+                    <img src="{{ movie.poster_path }}" alt="{{ movie.original_title }}" class="movie-poster">
+                    <div class="movie-overlay">
+                        <form action="/recommend" method="post">
+                            <input type="hidden" name="movie_title" value="{{ movie.original_title }}">
+                            <button type="submit" class="btn-overlay">
+                                <i class="fas fa-info-circle"></i> Tìm phim tương tự
+                            </button>
+                        </form>
+                        <div class="movie-rating">
+                            <i class="fas fa-star"></i> {{ movie.vote_average|round(1) }}
+                        </div>
+                    </div>
+                </div>
+                <div class="movie-info">
+                    <h4 class="movie-title" data-bs-toggle="tooltip" title="{{ movie.overview if movie.overview else 'Không có mô tả' }}">
+                        {{ movie.original_title }}
+                    </h4>
+                    <div class="movie-meta">
+                        <span class="movie-year">{{ movie.release_date.split('-')[0] if movie.release_date else 'N/A' }}</span>
+                        <span class="rating-badge rating-{{ 'high' if movie.vote_average >= 8.5 else ('medium' if movie.vote_average >= 7 else 'low') }}">
+                            {{ movie.vote_average|round(1) }}
+                        </span>
+                    </div>
+                    <div class="movie-overview">
+                        {{ movie.overview[:150] + '...' if movie.overview and movie.overview|length > 150 else movie.overview if movie.overview else 'Không có mô tả cho phim này.' }}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="alert alert-info m-5 text-center">
+            <i class="fas fa-info-circle me-2"></i>Không có dữ liệu phim xu hướng. Hãy tải lại trang!
+            <div class="mt-3">
+                <button class="btn btn-outline-light" onclick="location.reload(true);">
+                    <i class="fas fa-sync-alt me-2"></i>Tải lại
+                </button>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Footer -->
+        <footer class="text-center py-4" data-aos="fade-up">
+            <div class="footer-content">
+                <p><i class="fas fa-film me-2"></i> <strong>CineMatch</strong> - Hệ thống đề xuất phim dựa trên nội dung</p>
+                <p class="small text-muted">© 2025 - Phát triển với <i class="fas fa-heart text-danger"></i> bởi đội ngũ CineMatch</p>
+                <div class="footer-links">
+                    <a href="/about" class="footer-link"><i class="fas fa-info-circle"></i> Giới thiệu</a> |
+                    <a href="#" class="footer-link"><i class="fas fa-envelope"></i> Liên hệ</a> |
+                    <a href="#" class="footer-link"><i class="fas fa-lock"></i> Quyền riêng tư</a> |
+                    <a href="#" class="footer-link"><i class="fas fa-question-circle"></i> FAQ</a>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    
+    <script>
+    // Khởi tạo AOS (Animate on Scroll)
+    document.addEventListener('DOMContentLoaded', function() {
+        AOS.init({
+            duration: 800,
+            once: true,
+            offset: 100
+        });
+        
+        // Khởi tạo tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl, {
+                placement: 'top',
+                delay: {show: 500, hide: 100}
+            });
+        });
+    });
+    </script>
+</body>
+</html>

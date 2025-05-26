@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CineMatch | Hệ Thống Đề Xuất Phim Thông Minh</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@400;500;600;700&family=Oswald:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+</head>
+<body class="dark-mode">
+    <!-- Header & Navigation -->
+    <header class="site-header">
+        <div class="container">
+            <nav class="navbar navbar-expand-lg navbar-dark">
+                <div class="container-fluid">
+                    <a class="navbar-brand" href="{{ url_for('home') }}">
+                        <i class="fas fa-film me-2 pulse"></i>CineMatch
+                    </a>
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div class="collapse navbar-collapse" id="navbarNav">
+                        <ul class="navbar-nav ms-auto">
+                            <li class="nav-item">
+                                <a class="nav-link {{ 'active' if active_page == 'home' else '' }}" href="{{ url_for('home') }}">
+                                    <i class="fas fa-home me-1"></i> Trang chủ
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ 'active' if active_page == 'trending' else '' }}" href="{{ url_for('trending') }}">
+                                    <i class="fas fa-fire me-1"></i> Xu hướng
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ 'active' if active_page == 'top_rated' else '' }}" href="{{ url_for('top_rated') }}">
+                                    <i class="fas fa-star me-1"></i> Đánh giá cao
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ 'active' if active_page == 'about' else '' }}" href="{{ url_for('about') }}">
+                                    <i class="fas fa-info-circle me-1"></i> Giới thiệu
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-10 text-center">
+                    <h1 class="hero-title animate__animated animate__fadeIn">
+                        Khám phá <span class="text-gradient">bộ phim tiếp theo</span> của bạn
+                    </h1>
+                    <p class="hero-subtitle animate__animated animate__fadeIn animate__delay-1s">
+                        Hệ thống đề xuất thông minh dựa trên sở thích cá nhân
+                    </p>
+
+                    {% if error %}
+                    <div class="alert alert-danger animate__animated animate__shakeX">
+                        <i class="fas fa-exclamation-triangle me-2"></i>{{ error }}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="search-container mb-5 animate__animated animate__fadeInUp animate__delay-1s">
+                        <form id="search-form" action="{{ url_for('recommend') }}" method="post">
+                            <div class="input-group hero-search">
+                                <span class="input-group-text search-icon"><i class="fas fa-search"></i></span>
+                                <input type="text" id="movie-search" class="form-control form-control-lg" 
+                                    placeholder="Nhập tên phim bạn yêu thích..." name="movie_title" autocomplete="off">
+                                <button type="submit" class="btn btn-search highlight-btn">
+                                    <i class="fas fa-film"></i> Tìm phim tương tự
+                                </button>
+                            </div>
+                        </form>
+                        <div id="search-results" class="search-results"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <div class="container main-content">
+        <div class="row mb-5">
+            <!-- Top phim được đánh giá cao nhất -->
+            <div class="col-lg-6 mb-4" data-aos="fade-right" data-aos-delay="100">
+                <div class="card movie-card h-100">
+                    <div class="card-header d-flex align-items-center">
+                        <div class="card-header-icon">
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <div class="ms-3">
+                            <h3 class="card-title mb-0">Top phim được đánh giá cao nhất</h3>
+                            <small class="text-muted">Với ít nhất 1000 lượt đánh giá</small>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        {% if popular_movies and popular_movies|length > 0 %}
+                        <div class="movie-grid">
+                            {% for movie in popular_movies %}
+                            <div class="movie-card-item" data-aos="fade-up" data-aos-delay="{{ loop.index * 50 }}">
+                                <div class="movie-poster-container">
+                                    <div class="movie-rank">{{ loop.index }}</div>
+                                    <img src="{{ movie.poster_path }}" alt="{{ movie.original_title }}" class="movie-poster">
+                                    <div class="movie-overlay">
+                                        <form action="{{ url_for('recommend') }}" method="post">
+                                            <input type="hidden" name="movie_title" value="{{ movie.original_title }}">
+                                            <button type="submit" class="btn-overlay">
+                                                <i class="fas fa-info-circle"></i> Chi tiết
+                                            </button>
+                                        </form>
+                                        <div class="movie-rating">
+                                            <i class="fas fa-star"></i> {{ movie.vote_average|round(1) }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="movie-info">
+                                    <h4 class="movie-title" data-bs-toggle="tooltip" title="{{ movie.overview if movie.overview else 'Không có mô tả' }}">
+                                        {{ movie.original_title }}
+                                    </h4>
+                                    <div class="movie-meta">
+                                        <span class="movie-year">{{ movie.release_date.split('-')[0] if movie.release_date else 'N/A' }}</span>
+                                        <span class="rating-badge rating-{{ 'high' if movie.vote_average >= 8.5 else ('medium' if movie.vote_average >= 7 else 'low') }}">
+                                            {{ movie.vote_average|round(1) }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="text-center py-3">
+                            <a href="{{ url_for('top_rated') }}" class="btn btn-outline-light load-more">
+                                <i class="fas fa-plus-circle me-2"></i> Xem thêm phim
+                            </a>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-info m-3">
+                            <i class="fas fa-info-circle me-2"></i>Không có dữ liệu phim. Hãy tải lại trang!
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Top phim có nhiều lượt đánh giá nhất -->
+            <div class="col-lg-6 mb-4" data-aos="fade-left" data-aos-delay="200">
+                <div class="card movie-card h-100">
+                    <div class="card-header d-flex align-items-center">
+                        <div class="card-header-icon hot">
+                            <i class="fas fa-fire"></i>
+                        </div>
+                        <div class="ms-3">
+                            <h3 class="card-title mb-0">Top phim phổ biến nhất</h3>
+                            <small class="text-muted">Dựa trên số lượng đánh giá</small>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        {% if most_voted_movies and most_voted_movies|length > 0 %}
+                        <div class="movie-grid">
+                            {% for movie in most_voted_movies %}
+                            <div class="movie-card-item" data-aos="fade-up" data-aos-delay="{{ loop.index * 50 }}">
+                                <div class="movie-poster-container">
+                                    <div class="movie-rank">{{ loop.index }}</div>
+                                    <img src="{{ movie.poster_path }}" alt="{{ movie.original_title }}" class="movie-poster">
+                                    <div class="movie-overlay">
+                                        <form action="{{ url_for('recommend') }}" method="post">
+                                            <input type="hidden" name="movie_title" value="{{ movie.original_title }}">
+                                            <button type="submit" class="btn-overlay">
+                                                <i class="fas fa-info-circle"></i> Chi tiết
+                                            </button>
+                                        </form>
+                                        <div class="movie-votes">
+                                            <i class="fas fa-users"></i> {{ "{:,}".format(movie.vote_count|int) }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="movie-info">
+                                    <h4 class="movie-title" data-bs-toggle="tooltip" title="{{ movie.overview if movie.overview else 'Không có mô tả' }}">
+                                        {{ movie.original_title }}
+                                    </h4>
+                                    <div class="movie-meta">
+                                        <span class="movie-year">{{ movie.release_date.split('-')[0] if movie.release_date else 'N/A' }}</span>
+                                        <span class="votes-badge">
+                                            <i class="fas fa-users"></i> {{ "{:,}".format(movie.vote_count|int) }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="text-center py-3">
+                            <a href="{{ url_for('trending') }}" class="btn btn-outline-light load-more">
+                                <i class="fas fa-plus-circle me-2"></i> Xem thêm phim
+                            </a>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-info m-3">
+                            <i class="fas fa-info-circle me-2"></i>Không có dữ liệu phim. Hãy tải lại trang!
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Thêm nút tải lại trang nếu không có dữ liệu -->
+        {% if (not popular_movies or popular_movies|length == 0) or (not most_voted_movies or most_voted_movies|length == 0) %}
+        <div class="text-center mb-4">
+            <button class="btn btn-outline-light" onclick="location.reload(true);">
+                <i class="fas fa-sync-alt me-2"></i>Tải lại danh sách phim
+            </button>
+        </div>
+        {% endif %}
+        
+        <!-- Footer -->
+        <footer class="text-center py-4" data-aos="fade-up">
+            <div class="footer-content">
+                <p><i class="fas fa-film me-2"></i> <strong>CineMatch</strong> - Hệ thống đề xuất phim dựa trên nội dung</p>
+                <p class="small text-muted">© 2025 - Phát triển với <i class="fas fa-heart text-danger"></i> bởi đội ngũ CineMatch</p>
+                <div class="footer-links">
+                    <a href="{{ url_for('about') }}" class="footer-link"><i class="fas fa-info-circle"></i> Giới thiệu</a> |
+                    <a href="#" class="footer-link"><i class="fas fa-envelope"></i> Liên hệ</a> |
+                    <a href="#" class="footer-link"><i class="fas fa-lock"></i> Quyền riêng tư</a> |
+                    <a href="#" class="footer-link"><i class="fas fa-question-circle"></i> FAQ</a>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    
+    <script>
+    // Khởi tạo AOS (Animate on Scroll)
+    document.addEventListener('DOMContentLoaded', function() {
+        AOS.init({
+            duration: 800,
+            once: true,
+            offset: 100
+        });
+        
+        // Khởi tạo tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl, {
+                placement: 'top',
+                delay: {show: 500, hide: 100}
+            });
+        });
+    });
+
+    const searchInput = document.getElementById('movie-search');
+    const searchResults = document.getElementById('search-results');
+    const searchForm = document.getElementById('search-form');
+    let searchTimeout;
+
+    // Xử lý sự kiện input để gọi API tìm kiếm
+    searchInput.addEventListener('input', function() {
+        const query = this.value.trim();
+        
+        // Xóa timeout trước đó nếu có (debounce)
+        clearTimeout(searchTimeout);
+        
+        if (query.length < 2) {
+            searchResults.innerHTML = '';
+            searchResults.style.display = 'none';
+            return;
+        }
+        
+        // Hiển thị loading
+        searchResults.innerHTML = `
+            <div class="search-loading">
+                <i class="fas fa-spinner fa-pulse"></i> Đang tìm kiếm...
+            </div>
+        `;
+        searchResults.style.display = 'block';
+        
+        // Debounce: đợi 300ms sau khi người dùng ngừng gõ để gọi API
+        searchTimeout = setTimeout(() => {
+            // Gọi API search
+            fetch(`/search?query=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(movies => {
+                    searchResults.innerHTML = '';
+                    
+                    if (movies.length === 0) {
+                        searchResults.innerHTML = `
+                            <div class="search-result-item no-results">
+                                <div class="search-result-info">
+                                    <div class="search-result-title">Không tìm thấy phim</div>
+                                    <div class="search-result-subtitle">Hãy thử từ khóa khác</div>
+                                </div>
+                            </div>
+                        `;
+                        return;
+                    }
+                    
+                    // Hiển thị kết quả tìm kiếm
+                    movies.forEach((movie, index) => {
+                        // Xử lý thông tin phim
+                        let originalTitle = movie.original_title;
+                        let vietnameseTitle = (movie.title && movie.title !== movie.original_title) ? movie.title : '';
+                        let year = movie.release_date ? new Date(movie.release_date).getFullYear() : 'N/A';
+                        let posterUrl = movie.poster_path;
+                        let rating = movie.vote_average || 'N/A';
+                        
+                        // Phân loại rating theo màu
+                        let ratingClass = '';
+                        if (typeof rating === 'number') {
+                            if (rating >= 8.5) ratingClass = 'high';
+                            else if (rating >= 7) ratingClass = 'medium';
+                            else ratingClass = 'low';
+                        }
+                        
+                        // Tạo HTML cho mỗi kết quả
+                        const resultItem = document.createElement('div');
+                        resultItem.className = 'search-result-item';
+                        if (index === 0) resultItem.classList.add('active');
+                        
+                        resultItem.innerHTML = `
+                            <div class="search-result-poster">
+                                <img src="${posterUrl}" alt="${originalTitle}">
+                            </div>
+                            <div class="search-result-info">
+                                <div class="search-result-title">${originalTitle}</div>
+                                ${vietnameseTitle ? `<div class="search-result-subtitle">${vietnameseTitle}</div>` : ''}
+                                <div class="search-result-meta">
+                                    <span class="search-result-year">${year}</span>
+                                    <span class="search-result-dot">•</span>
+                                    <span class="search-rating ${ratingClass}">${typeof rating === 'number' ? rating.toFixed(1) : rating}</span>
+                                </div>
+                            </div>
+                        `;
+                        
+                        // Khi click vào phim, tự động submit form
+                        resultItem.addEventListener('click', function() {
+                            searchInput.value = movie.original_title;
+                            searchResults.style.display = 'none';
+                            searchForm.submit();
+                        });
+                        
+                        searchResults.appendChild(resultItem);
+                    });
+                    
+                    searchResults.style.display = 'block';
+                })
+                .catch(error => {
+                    console.error('Error searching movies:', error);
+                    searchResults.innerHTML = `
+                        <div class="search-result-item no-results">
+                            <div class="search-result-info">
+                                <div class="search-result-title text-danger">Có lỗi xảy ra khi tìm kiếm</div>
+                                <div class="search-result-subtitle">Vui lòng thử lại sau</div>
+                            </div>
+                        </div>
+                    `;
+                });
+        }, 300);
+    });
+
+    // Đóng kết quả tìm kiếm khi click ra ngoài
+    document.addEventListener('click', function(e) {
+        if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+            searchResults.style.display = 'none';
+        }
+    });
+
+    // Focus vào ô tìm kiếm khi trang được tải
+    document.addEventListener('DOMContentLoaded', function() {
+        searchInput.focus();
+        
+        // Xử lý trường hợp nhấn phím mũi tên để di chuyển trong kết quả tìm kiếm
+        searchInput.addEventListener('keydown', function(e) {
+            const results = searchResults.querySelectorAll('.search-result-item');
+            if (results.length === 0 || searchResults.style.display === 'none') return;
+            
+            let activeItem = searchResults.querySelector('.search-result-item.active');
+            let index = -1;
+            
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (!activeItem) {
+                    // Kích hoạt item đầu tiên
+                    results[0].classList.add('active');
+                    results[0].scrollIntoView({ block: 'nearest' });
+                } else {
+                    // Tìm index hiện tại và di chuyển xuống
+                    for (let i = 0; i < results.length; i++) {
+                        if (results[i] === activeItem) {
+                            index = i;
+                            break;
+                        }
+                    }
+                    
+                    if (index < results.length - 1) {
+                        activeItem.classList.remove('active');
+                        results[index + 1].classList.add('active');
+                        results[index + 1].scrollIntoView({ block: 'nearest' });
+                    }
+                }
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (activeItem) {
+                    // Tìm index hiện tại và di chuyển lên
+                    for (let i = 0; i < results.length; i++) {
+                        if (results[i] === activeItem) {
+                            index = i;
+                            break;
+                        }
+                    }
+                    
+                    if (index > 0) {
+                        activeItem.classList.remove('active');
+                        results[index - 1].classList.add('active');
+                        results[index - 1].scrollIntoView({ block: 'nearest' });
+                    }
+                }
+            } else if (e.key === 'Enter' && activeItem) {
+                e.preventDefault();
+                activeItem.click();
+            }
+        });
+        
+        // Xử lý nút "Xem thêm"
+        const loadMoreButtons = document.querySelectorAll('.load-more:not([href])');
+        loadMoreButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                // Mô phỏng loading
+                this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Đang tải...';
+                this.disabled = true;
+                
+                // Giả lập delay để UX tốt hơn
+                setTimeout(() => {
+                    this.innerHTML = '<i class="fas fa-check-circle me-2"></i> Đã tải tất cả phim';
+                    this.classList.remove('btn-outline-light');
+                    this.classList.add('btn-success');
+                }, 1500);
+            });
+        });
+    });
+    </script>
+</body>
+</html>

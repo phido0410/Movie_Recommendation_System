@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giới Thiệu | CineMatch</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@400;500;600;700&family=Oswald:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+</head>
+<body class="dark-mode">
+    <!-- Header & Navigation -->
+    <header class="site-header">
+        <div class="container">
+            <nav class="navbar navbar-expand-lg navbar-dark">
+                <div class="container-fluid">
+                    <a class="navbar-brand" href="/">
+                        <i class="fas fa-film me-2 pulse"></i>CineMatch
+                    </a>
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div class="collapse navbar-collapse" id="navbarNav">
+                        <ul class="navbar-nav ms-auto">
+                            <li class="nav-item">
+                                <a class="nav-link {{ 'active' if active_page == 'home' else '' }}" href="/">
+                                    <i class="fas fa-home me-1"></i> Trang chủ
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ 'active' if active_page == 'trending' else '' }}" href="/trending">
+                                    <i class="fas fa-fire me-1"></i> Xu hướng
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ 'active' if active_page == 'top_rated' else '' }}" href="/top-rated">
+                                    <i class="fas fa-star me-1"></i> Đánh giá cao
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ 'active' if active_page == 'about' else '' }}" href="/about">
+                                    <i class="fas fa-info-circle me-1"></i> Giới thiệu
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="container">
+            <h1 class="display-4 animate__animated animate__fadeIn">
+                <i class="fas fa-info-circle me-2"></i> Về CineMatch
+            </h1>
+            <p class="lead text-muted animate__animated animate__fadeIn animate__delay-1s">
+                Hệ thống đề xuất phim thông minh dựa trên công nghệ AI
+            </p>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container main-content">
+        <div class="row">
+            <div class="col-lg-8 mb-4" data-aos="fade-up">
+                <div class="about-card">
+                    <h3 class="mb-4"><i class="fas fa-film me-2"></i> Hệ thống CineMatch là gì?</h3>
+                    <p>CineMatch là một hệ thống đề xuất phim thông minh sử dụng các thuật toán trí tuệ nhân tạo để phân tích nội dung phim và đưa ra những đề xuất phù hợp nhất với sở thích của bạn.</p>
+                    
+                    <p>Không giống như các nền tảng đề xuất thông thường chỉ dựa trên thể loại hoặc diễn viên, CineMatch đi sâu vào phân tích:</p>
+                    <ul>
+                        <li>Cốt truyện và chủ đề của phim</li>
+                        <li>Bối cảnh và không gian nghệ thuật</li>
+                        <li>Phong cách đạo diễn và quay phim</li>
+                        <li>Các yếu tố kỹ thuật và sáng tạo</li>
+                    </ul>
+                    
+                    <h4 class="mt-4 mb-3"><i class="fas fa-cogs me-2"></i> Cách thức hoạt động</h4>
+                    <p>Hệ thống sử dụng phương pháp <strong>đề xuất dựa trên nội dung (Content-Based Recommendation)</strong> kết hợp với các kỹ thuật xử lý ngôn ngữ tự nhiên tiên tiến:</p>
+                    
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="tech-item">
+                                <h5><i class="fas fa-keyboard me-2"></i> TF-IDF</h5>
+                                <p>Phân tích từ vựng trong mô tả phim và xác định đặc trưng nội dung quan trọng</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="tech-item">
+                                <h5><i class="fas fa-project-diagram me-2"></i> Cosine Similarity</h5>
+                                <p>Tính toán độ tương đồng giữa các phim dựa trên vector đặc trưng</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-secondary mt-4">
+                        <i class="fas fa-lightbulb me-2"></i> <strong>Mẹo:</strong> Để có kết quả đề xuất tốt nhất, hãy chọn những phim bạn thực sự yêu thích thay vì những phim quá phổ biến hoặc quá mới.
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 mb-4" data-aos="fade-left" data-aos-delay="200">
+                <div class="about-card">
+                    <h3 class="mb-4"><i class="fas fa-chart-bar me-2"></i> Thống kê dữ liệu</h3>
+                    
+                    <div class="stats-container">
+                        <div class="row">
+                            <div class="col-md-6 col-sm-6 mb-3">
+                                <div class="stat-card">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-film"></i>
+                                    </div>
+                                    <div class="stat-value">{{ stats.total_movies }}</div>
+                                    <div class="stat-label">Tổng số phim</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-sm-6 mb-3">
+                                <div class="stat-card">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-star"></i>
+                                    </div>
+                                    <div class="stat-value">{{ stats.avg_rating }}</div>
+                                    <div class="stat-label">Điểm đánh giá TB</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-sm-6 mb-3">
+                                <div class="stat-card">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-users"></i>
+                                    </div>
+                                    <div class="stat-value">{{ stats.avg_votes }}</div>
+                                    <div class="stat-label">Lượt đánh giá TB</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-sm-6 mb-3">
+                                <div class="stat-card">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-calendar-alt"></i>
+                                    </div>
+                                    <div class="stat-value">{{ stats.oldest_movie }} - {{ stats.newest_movie }}</div>
+                                    <div class="stat-label">Phạm vi thời gian</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-3">
+            <div class="col-12 mb-4" data-aos="fade-up">
+                <div class="about-card">
+                    <h3 class="mb-4"><i class="fas fa-code me-2"></i> Công nghệ sử dụng</h3>
+                    
+                    <div class="row">
+                        <div class="col-md-4 col-sm-6 mb-3">
+                            <div class="tech-item">
+                                <h5><i class="fab fa-python me-2"></i> Python</h5>
+                                <p>Ngôn ngữ lập trình chính cho xử lý dữ liệu và thuật toán</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-6 mb-3">
+                            <div class="tech-item">
+                                <h5><i class="fas fa-server me-2"></i> Flask</h5>
+                                <p>Framework web nhẹ và linh hoạt cho back-end</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-6 mb-3">
+                            <div class="tech-item">
+                                <h5><i class="fas fa-table me-2"></i> Pandas</h5>
+                                <p>Thư viện phân tích dữ liệu hiệu suất cao</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-6 mb-3">
+                            <div class="tech-item">
+                                <h5><i class="fas fa-brain me-2"></i> Scikit-learn</h5>
+                                <p>Thư viện học máy cho TF-IDF và cosine similarity</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-6 mb-3">
+                            <div class="tech-item">
+                                <h5><i class="fab fa-bootstrap me-2"></i> Bootstrap</h5>
+                                <p>Framework CSS cho giao diện đáp ứng</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-6 mb-3">
+                            <div class="tech-item">
+                                <h5><i class="fab fa-js-square me-2"></i> JavaScript</h5>
+                                <p>Xử lý tương tác phía client và hiệu ứng</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <footer class="text-center py-4" data-aos="fade-up">
+            <div class="footer-content">
+                <p><i class="fas fa-film me-2"></i> <strong>CineMatch</strong> - Hệ thống đề xuất phim dựa trên nội dung</p>
+                <p class="small text-muted">© 2025 - Phát triển với <i class="fas fa-heart text-danger"></i> bởi đội ngũ CineMatch</p>
+                <div class="footer-links">
+                    <a href="/about" class="footer-link"><i class="fas fa-info-circle"></i> Giới thiệu</a> |
+                    <a href="#" class="footer-link"><i class="fas fa-envelope"></i> Liên hệ</a> |
+                    <a href="#" class="footer-link"><i class="fas fa-lock"></i> Quyền riêng tư</a> |
+                    <a href="#" class="footer-link"><i class="fas fa-question-circle"></i> FAQ</a>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    
+    <script>
+    // Khởi tạo AOS (Animate on Scroll)
+    document.addEventListener('DOMContentLoaded', function() {
+        AOS.init({
+            duration: 800,
+            once: true,
+            offset: 100
+        });
+    });
+    </script>
+</body>
+</html>

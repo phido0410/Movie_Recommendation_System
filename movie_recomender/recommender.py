@@ -8,7 +8,8 @@ import re
 from scipy import sparse
 import requests
 import io
-import gdown  # Thêm thư viện này
+import gdown
+import gc  # Thêm thư viện garbage collector
 
 class MovieRecommender:
     def __init__(self, csv_path='data/Data_Movies_ok.csv', similarity_matrix_path='data/similarity_matrix.npz'):
@@ -16,7 +17,7 @@ class MovieRecommender:
         self.similarity_matrix_path = similarity_matrix_path
         self.gdrive_id = '1q7EYa332RknMmYqTcBsn_5eH_VjCLbMm'  # ID của file trên Google Drive
         
-        # Đọc dữ liệu phim
+        # Đọc dữ liệu phim (giới hạn số lượng tùy môi trường)
         self.movies_df = self._load_data()
         
         # Tính toán/nạp ma trận tương đồng
@@ -34,9 +35,12 @@ class MovieRecommender:
             
             # Giới hạn số lượng phim khi chạy trên Render để giảm kích thước bộ nhớ
             if os.environ.get('RENDER', '0') == '1':
-                # Lấy 3000 phim có lượt đánh giá cao nhất
-                df = df.sort_values(by='vote_count', ascending=False).head(4000)
-                print(f"Limited dataset to 4000 movies for Render deployment")
+                # Giảm xuống 2500 phim để tiết kiệm RAM hơn nữa
+                df = df.sort_values(by='vote_count', ascending=False).head(2500)
+                print(f"Limited dataset to 2500 movies for Render deployment")
+                
+                # Gọi garbage collector để giải phóng bộ nhớ
+                gc.collect()
             
             # Chuẩn hóa dữ liệu
             df['overview'] = df['overview'].fillna('')  # Thay thế NaN bằng chuỗi trống
@@ -67,7 +71,7 @@ class MovieRecommender:
             print(f"Error loading movie data: {str(e)}")
             # Trả về DataFrame rỗng nếu có lỗi
             return pd.DataFrame(columns=['id', 'original_title', 'overview', 'vote_average', 'vote_count'])
-    
+
     def _compute_similarity_matrix(self):
         """Tính toán ma trận tương đồng dựa trên overview của phim"""
         start_time = time.time()
@@ -76,6 +80,9 @@ class MovieRecommender:
         # Tạo TF-IDF vectorizer và tính vectors
         tfidf = TfidfVectorizer(stop_words='english')
         tfidf_matrix = tfidf.fit_transform(self.movies_df['overview'])
+        
+        # Giải phóng bộ nhớ
+        gc.collect()
         
         # Tính ma trận tương đồng cosine
         if os.environ.get('RENDER', '0') == '1':
@@ -87,6 +94,10 @@ class MovieRecommender:
         else:
             # Tính dạng dense cho môi trường local
             similarity = cosine_similarity(tfidf_matrix, tfidf_matrix)
+        
+        # Giải phóng bộ nhớ
+        del tfidf_matrix
+        gc.collect()
         
         print(f"Similarity matrix computation completed in {time.time() - start_time:.2f} seconds")
         return similarity
@@ -106,78 +117,81 @@ class MovieRecommender:
         sparse.save_npz(self.similarity_matrix_path, sparse_matrix)
         print(f"Similarity matrix saved to {self.similarity_matrix_path}")
     
+    def _download_and_process_in_chunks(self, url, temp_file):
+        """Tải và xử lý file lớn theo từng phần để tiết kiệm bộ nhớ"""
+        try:
+            # Sử dụng requests với streaming để tải từng phần nhỏ
+            response = requests.get(url, stream=True)
+            if response.status_code != 200:
+                print(f"Failed to download file: {response.status_code}")
+                return None
+            
+            # Tạo thư mục nếu chưa tồn tại
+            os.makedirs(os.path.dirname(temp_file), exist_ok=True) if os.path.dirname(temp_file) else None
+            
+            # Ghi từng chunk vào file
+            with open(temp_file, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=1024*1024):  # 1MB chunks
+                    if chunk:
+                        f.write(chunk)
+            
+            return temp_file
+        except Exception as e:
+            print(f"Error downloading in chunks: {str(e)}")
+            return None
+    
     def _load_from_gdrive(self, keep_sparse=False):
         """Tải ma trận tương đồng từ Google Drive"""
         print("Attempting to download similarity matrix from Google Drive...")
         
+        # Sử dụng phương pháp tải theo chunk
         try:
-            # Phương pháp 1: Sử dụng gdown
+            # URL trực tiếp (có thể cần sửa nếu Google Drive yêu cầu xác thực)
+            direct_url = f"https://drive.google.com/uc?export=download&id={self.gdrive_id}"
             temp_file = 'temp_similarity_matrix.npz'
-            url = f'https://drive.google.com/uc?id={self.gdrive_id}'
             
-            # Tải file từ Google Drive
-            gdown.download(url, temp_file, quiet=False)
+            # Tải file theo từng phần
+            downloaded_file = self._download_and_process_in_chunks(direct_url, temp_file)
             
-            if os.path.exists(temp_file):
+            if downloaded_file and os.path.exists(downloaded_file):
                 # Đọc ma trận từ file tạm
-                sparse_matrix = sparse.load_npz(temp_file)
+                sparse_matrix = sparse.load_npz(downloaded_file)
                 
-                # Copy file tạm vào vị trí chính thức (để lần sau không cần tải lại)
+                # Copy file tạm vào vị trí chính thức
                 os.makedirs(os.path.dirname(self.similarity_matrix_path), exist_ok=True)
                 import shutil
-                shutil.copy(temp_file, self.similarity_matrix_path)
+                shutil.copy(downloaded_file, self.similarity_matrix_path)
                 
-                # Xóa file tạm
-                os.remove(temp_file)
+                # Xóa file tạm để giải phóng dung lượng
+                os.remove(downloaded_file)
+                gc.collect()  # Gọi garbage collector
                 
-                # Chỉ chuyển về dense nếu không chạy trên Render và không yêu cầu giữ sparse
-                if not keep_sparse and os.environ.get('RENDER', '0') != '1':
-                    result = sparse_matrix.toarray()
-                    print("Successfully loaded and converted similarity matrix from Google Drive")
-                else:
-                    result = sparse_matrix
-                    print("Successfully loaded sparse similarity matrix from Google Drive")
+                print("Successfully loaded sparse similarity matrix")
+                return sparse_matrix  # Luôn giữ sparse khi chạy trên Render
                 
-                return result
-            
         except Exception as e:
-            print(f"Error using gdown: {str(e)}")
-            print("Trying alternative download method...")
+            print(f"Error downloading similarity matrix: {str(e)}")
             
+            # Thử phương pháp với gdown nếu phương pháp chunk không hoạt động
             try:
-                # Phương pháp 2: Sử dụng requests
-                direct_url = f"https://drive.google.com/uc?export=download&id={self.gdrive_id}"
-                response = requests.get(direct_url)
+                temp_file = 'temp_similarity_matrix.npz'
+                url = f'https://drive.google.com/uc?id={self.gdrive_id}'
                 
-                if response.status_code == 200:
-                    # Lưu vào file tạm
-                    with open('temp_similarity_matrix.npz', 'wb') as f:
-                        f.write(response.content)
-                    
+                # Tải file từ Google Drive
+                gdown.download(url, temp_file, quiet=False)
+                
+                if os.path.exists(temp_file):
                     # Đọc ma trận từ file tạm
-                    sparse_matrix = sparse.load_npz('temp_similarity_matrix.npz')
+                    sparse_matrix = sparse.load_npz(temp_file)
                     
-                    # Copy file tạm vào vị trí chính thức
-                    os.makedirs(os.path.dirname(self.similarity_matrix_path), exist_ok=True)
-                    import shutil
-                    shutil.copy('temp_similarity_matrix.npz', self.similarity_matrix_path)
+                    # Xóa file tạm ngay lập tức để giải phóng dung lượng
+                    os.remove(temp_file)
+                    gc.collect()
                     
-                    # Xóa file tạm
-                    os.remove('temp_similarity_matrix.npz')
-                    
-                    # Chỉ chuyển về dense nếu không chạy trên Render và không yêu cầu giữ sparse
-                    if not keep_sparse and os.environ.get('RENDER', '0') != '1':
-                        result = sparse_matrix.toarray()
-                        print("Successfully loaded and converted similarity matrix using requests")
-                    else:
-                        result = sparse_matrix
-                        print("Successfully loaded sparse similarity matrix using requests")
-                    
-                    return result
-                else:
-                    print(f"Failed to download file: {response.status_code}")
+                    print("Successfully loaded sparse similarity matrix using gdown")
+                    return sparse_matrix
             except Exception as e:
-                print(f"Error with alternative download method: {str(e)}")
+                print(f"Error using gdown: {str(e)}")
         
         # Nếu tất cả phương pháp đều thất bại, trả về None
         print("Failed to download similarity matrix.")
@@ -185,53 +199,34 @@ class MovieRecommender:
     
     def _load_or_compute_similarity_matrix(self):
         """Kiểm tra nếu ma trận đã tồn tại thì load, nếu không thì tính và lưu"""
-        # Xác định có giữ ma trận sparse hay không
-        keep_sparse = os.environ.get('RENDER', '0') == '1'
+        # Khi chạy trên Render, luôn giữ ở dạng sparse
+        render_env = os.environ.get('RENDER', '0') == '1'
         
-        # Khi chạy trên Render, ưu tiên load từ Google Drive và giữ ở dạng sparse
-        if keep_sparse:
-            similarity = self._load_from_gdrive(keep_sparse=True)
-            if similarity is not None:
-                # Kiểm tra kích thước
-                if similarity.shape[0] == len(self.movies_df):
-                    print("Using sparse matrix to save memory on Render")
-                    return similarity  # Giữ ở dạng sparse
-                else:
-                    print(f"Shape mismatch: similarity {similarity.shape[0]}, movies {len(self.movies_df)}")
-        else:
-            # Thử load ma trận từ local trước
-            if os.path.exists(self.similarity_matrix_path):
-                try:
-                    sparse_matrix = sparse.load_npz(self.similarity_matrix_path)
-                    
-                    # Trên môi trường local, chuyển về dense nếu không yêu cầu giữ sparse
-                    if not keep_sparse:
-                        similarity = sparse_matrix.toarray()
-                    else:
-                        similarity = sparse_matrix
-                        
-                    print(f"Similarity matrix loaded from local file: {self.similarity_matrix_path}")
-                    
-                    # Kiểm tra kích thước
-                    if (isinstance(similarity, sparse.spmatrix) and similarity.shape[0] == len(self.movies_df)) or \
-                       (not isinstance(similarity, sparse.spmatrix) and similarity.shape[0] == len(self.movies_df)):
-                        return similarity
-                    else:
-                        print(f"Shape mismatch: similarity {similarity.shape[0]}, movies {len(self.movies_df)}")
-                except Exception as e:
-                    print(f"Error loading local similarity matrix: {str(e)}")
-            
-            # Nếu không tải được hoặc kích thước không khớp, thử tải từ Google Drive
-            similarity = self._load_from_gdrive(keep_sparse=keep_sparse)
-            if similarity is not None:
-                # Kiểm tra kích thước
-                if (isinstance(similarity, sparse.spmatrix) and similarity.shape[0] == len(self.movies_df)) or \
-                   (not isinstance(similarity, sparse.spmatrix) and similarity.shape[0] == len(self.movies_df)):
-                    return similarity
-                else:
-                    print(f"Shape mismatch: similarity {similarity.shape[0]}, movies {len(self.movies_df)}")
+        # Trên Render, tính toán mới ma trận tương đồng thay vì tải
+        if render_env:
+            print("Computing new similarity matrix for Render environment...")
+            similarity = self._compute_similarity_matrix()
+            return similarity  # _compute_similarity_matrix đã đảm bảo trả về sparse cho Render
         
-        # Nếu không thể tải từ Google Drive hoặc kích thước không khớp, tính toán lại
+        # Thử load ma trận từ local trước
+        if os.path.exists(self.similarity_matrix_path):
+            try:
+                sparse_matrix = sparse.load_npz(self.similarity_matrix_path)
+                
+                # Kiểm tra kích thước
+                if sparse_matrix.shape[0] == len(self.movies_df):
+                    if render_env:
+                        # Giữ nguyên sparse matrix trên Render
+                        return sparse_matrix
+                    else:
+                        # Chuyển về dense trên môi trường local
+                        return sparse_matrix.toarray()
+                else:
+                    print(f"Shape mismatch: similarity {sparse_matrix.shape[0]}, movies {len(self.movies_df)}")
+            except Exception as e:
+                print(f"Error loading local similarity matrix: {str(e)}")
+        
+        # Tính toán lại
         similarity = self._compute_similarity_matrix()
         self._save_similarity_matrix(similarity)
         
@@ -261,27 +256,44 @@ class MovieRecommender:
         
         # Xử lý khác nhau tùy thuộc vào loại ma trận (sparse hoặc dense)
         if self.is_sparse:
-            # Lấy hàng tương ứng từ sparse matrix
-            similarity_row = self.similarity_matrix[movie_idx].toarray().flatten()
-            similarity_scores = list(enumerate(similarity_row))
+            # Tối ưu hóa xử lý sparse matrix
+            similarity_row = self.similarity_matrix[movie_idx]
+            
+            # Chuyển CSR matrix thành đôi (index, giá trị) và sắp xếp theo giá trị
+            similarity_scores = sorted(
+                [(i, similarity_row[0, i]) for i in similarity_row.indices], 
+                key=lambda x: x[1], 
+                reverse=True
+            )
+            
+            # Thêm vào các phim còn thiếu nếu cần
+            if len(similarity_scores) < top_n + 1:
+                # Tìm các indices chưa có
+                existing_indices = set(similarity_row.indices)
+                missing_indices = [i for i in range(len(self.movies_df)) if i not in existing_indices and i != movie_idx]
+                
+                # Thêm vào các indices còn thiếu với điểm tương đồng bằng 0
+                similarity_scores.extend([(i, 0.0) for i in missing_indices])
+                
+                # Sắp xếp lại
+                similarity_scores = sorted(similarity_scores, key=lambda x: x[1], reverse=True)
         else:
             # Xử lý như bình thường nếu là dense matrix
             similarity_scores = list(enumerate(self.similarity_matrix[movie_idx]))
-        
-        # Sắp xếp theo điểm tương đồng giảm dần
-        similarity_scores = sorted(similarity_scores, key=lambda x: x[1], reverse=True)
+            similarity_scores = sorted(similarity_scores, key=lambda x: x[1], reverse=True)
         
         # Lấy top_n+1 (bỏ qua phim đầu tiên vì nó chính là phim đang tìm)
-        top_similar = similarity_scores[1:top_n+1]
+        top_similar = similarity_scores[1:top_n+1] if movie_idx == similarity_scores[0][0] else similarity_scores[:top_n]
         
         # Lấy indices của các phim tương tự
         movie_indices = [i[0] for i in top_similar]
         # Lấy điểm tương đồng
-        similarity_values = [i[1] for i in top_similar]
+        similarity_values = [float(i[1]) for i in top_similar]
         
         # Trả về DataFrame chứa thông tin của các phim tương tự
         return self.movies_df.iloc[movie_indices], similarity_values
     
+    # [Các phương thức khác giữ nguyên]
     def search_movies(self, query, limit=10):
         """
         Tìm kiếm phim theo tên sử dụng các kỹ thuật fuzzy matching
@@ -339,7 +351,7 @@ class MovieRecommender:
             'total_movies': len(self.movies_df),
             'avg_rating': round(self.movies_df['vote_average'].mean(), 1),
             'avg_votes': f"{int(self.movies_df['vote_count'].mean()):,}",
-            'oldest_movie': self.movies_df['release_date'].min().year if 'release_date' in self.movies_df else 'N/A',
-            'newest_movie': self.movies_df['release_date'].max().year if 'release_date' in self.movies_df else 'N/A',
+            'oldest_movie': self.movies_df['release_date'].min().year if 'release_date' in self.movies_df.columns else 'N/A',
+            'newest_movie': self.movies_df['release_date'].max().year if 'release_date' in self.movies_df.columns else 'N/A',
         }
         return stats

@@ -218,4 +218,4 @@ def favicon():
 if __name__ == '__main__':
     # Lấy PORT từ biến môi trường (Render sẽ cung cấp)
     port = int(os.environ.get('PORT', app.config['PORT']))
-    app.run(debug=False, host='0.0.0.0', port=port)
+    app.run(debug=True, host='0.0.0.0', port=port)

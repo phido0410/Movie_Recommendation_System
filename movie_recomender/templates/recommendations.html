@@ -1,4 +1,3 @@
-<!-- filepath: /Users/dophi/Desktop/movie_recomender/templates/recommendations.html -->
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -31,24 +30,16 @@
                     <div class="collapse navbar-collapse" id="navbarNav">
                         <ul class="navbar-nav ms-auto">
                             <li class="nav-item">
-                                <a class="nav-link {{ 'active' if active_page == 'home' else '' }}" href="/">
-                                    <i class="fas fa-home me-1"></i> Trang chủ
-                                </a>
+                                <a class="nav-link {{ 'active' if active_page == 'home' }}" href="/"><i class="fas fa-home me-1"></i> Trang chủ</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link {{ 'active' if active_page == 'trending' else '' }}" href="/trending">
-                                    <i class="fas fa-fire me-1"></i> Xu hướng
-                                </a>
+                                <a class="nav-link {{ 'active' if active_page == 'trending' }}" href="/trending"><i class="fas fa-fire me-1"></i> Xu hướng</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link {{ 'active' if active_page == 'top_rated' else '' }}" href="/top-rated">
-                                    <i class="fas fa-star me-1"></i> Đánh giá cao
-                                </a>
+                                <a class="nav-link {{ 'active' if active_page == 'top_rated' }}" href="/top-rated"><i class="fas fa-star me-1"></i> Đánh giá cao</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link {{ 'active' if active_page == 'about' else '' }}" href="/about">
-                                    <i class="fas fa-info-circle me-1"></i> Giới thiệu
-                                </a>
+                                <a class="nav-link {{ 'active' if active_page == 'about' }}" href="/about"><i class="fas fa-info-circle me-1"></i> Giới thiệu</a>
                             </li>
                         </ul>
                     </div>
@@ -77,34 +68,49 @@
                 <div class="card selected-movie-card animate__animated animate__fadeIn">
                     <div class="card-body">
                         <div class="row">
-                            <div class="col-md-3 mb-3 mb-md-0">
-                                <img src="{{ selected_movie.poster_path }}" alt="{{ selected_movie.original_title }}" class="selected-movie-poster">
+                            <div class="col-md-3 text-center mb-3 mb-md-0">
+                                <img src="{{ selected_movie.poster_path }}" alt="{{ selected_movie.original_title }}" class="img-fluid selected-movie-poster">
                             </div>
                             <div class="col-md-9">
-                                <h2 class="selected-movie-title">{{ selected_movie.original_title }}</h2>
-                                {% if selected_movie.title and selected_movie.title != selected_movie.original_title %}
-                                <h5 class="text-muted mb-3">{{ selected_movie.title }}</h5>
-                                {% endif %}
-                                
-                                <div class="selected-movie-meta">
+                                <h3 class="selected-movie-title mb-2">{{ selected_movie.original_title }}</h3>
+                                <div class="selected-movie-meta mb-3">
                                     {% if selected_movie.release_date %}
-                                    <span class="badge bg-secondary me-2">
-                                        <i class="fas fa-calendar-alt me-1"></i> {{ selected_movie.release_date.split('-')[0] }}
+                                    <span class="badge bg-secondary me-2">{{ selected_movie.release_date[:4] }}</span>
+                                    {% endif %}
+                                    
+                                    {% if selected_movie.vote_average %}
+                                    <span class="badge {% if selected_movie.vote_average >= 7 %}bg-success{% elif selected_movie.vote_average >= 5 %}bg-warning{% else %}bg-danger{% endif %} me-2">
+                                        <i class="fas fa-star me-1"></i> {{ selected_movie.vote_average }}/10
                                     </span>
                                     {% endif %}
                                     
-                                    <span class="badge bg-primary me-2">
-                                        <i class="fas fa-star me-1"></i> {{ selected_movie.vote_average|round(1) }}
-                                    </span>
-                                    
+                                    {% if selected_movie.vote_count %}
                                     <span class="badge bg-info">
-                                        <i class="fas fa-users me-1"></i> {{ "{:,}".format(selected_movie.vote_count|int) }} đánh giá
+                                        <i class="fas fa-users me-1"></i> {{ "{:,}".format(selected_movie.vote_count) }} đánh giá
                                     </span>
+                                    {% endif %}
                                 </div>
                                 
-                                <div class="selected-movie-overview mt-3">
-                                    <h5>Tóm tắt</h5>
-                                    <p>{{ selected_movie.overview if selected_movie.overview else 'Không có mô tả cho phim này.' }}</p>
+                                <div class="selected-movie-overview">
+                                    <h5 class="mb-2">Tóm tắt</h5>
+                                    <p>{{ selected_movie.overview or "Không có thông tin mô tả." }}</p>
+                                </div>
+                                
+                                <div class="movie-stats mt-3">
+                                    <p class="mb-0">
+                                        <strong>Thể loại:</strong> 
+                                        {% if selected_movie.genres %}
+                                            {{ selected_movie.genres }}
+                                        {% else %}
+                                            <span class="text-muted">Không có thông tin</span>
+                                        {% endif %}
+                                    </p>
+                                    
+                                    {% if selected_movie.popularity %}
+                                    <p class="mb-0">
+                                        <strong>Độ phổ biến:</strong> {{ selected_movie.popularity }}
+                                    </p>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
@@ -123,8 +129,8 @@
                 
                 <div class="recommendation-stats">
                     <div class="alert alert-info animate__animated animate__fadeIn animate__delay-1s">
-                        <i class="fas fa-info-circle me-2"></i> 
-                        Các phim được đề xuất dựa trên sự tương đồng về nội dung, chủ đề và yếu tố nghệ thuật.
+                        <i class="fas fa-info-circle me-2"></i>
+                        Đã tìm thấy <strong>{{ recommendations|length }}</strong> bộ phim tương tự dựa trên nội dung phim "{{ movie_title }}". Các bộ phim được sắp xếp theo độ tương đồng giảm dần.
                     </div>
                 </div>
             </div>
@@ -138,39 +144,38 @@
                         <div class="row">
                             <div class="col-md-4 mb-3 mb-md-0">
                                 <div class="recommendation-poster-container">
-                                    <img src="{{ movie.poster_path }}" alt="{{ movie.original_title }}" class="recommendation-poster">
-                                    <div class="similarity-badge" data-bs-toggle="tooltip" title="Mức độ tương đồng">
-                                        {{ movie.similarity }}%
-                                    </div>
+                                    <img src="{{ movie.poster_path }}" alt="{{ movie.original_title }}" class="img-fluid recommendation-poster">
+                                    <span class="similarity-badge">{{ movie.similarity }}% tương đồng</span>
                                 </div>
                             </div>
                             <div class="col-md-8">
-                                <h4 class="recommendation-title">{{ movie.original_title }}</h4>
-                                
-                                <div class="recommendation-meta">
+                                <h4 class="recommendation-title mb-2">{{ movie.original_title }}</h4>
+                                <div class="recommendation-meta mb-2">
                                     {% if movie.release_date %}
-                                    <span class="badge bg-dark me-2">
-                                        <i class="fas fa-calendar-alt me-1"></i> {{ movie.release_date.split('-')[0] }}
+                                    <span class="badge bg-secondary me-2">{{ movie.release_date[:4] }}</span>
+                                    {% endif %}
+                                    
+                                    {% if movie.vote_average %}
+                                    <span class="badge {% if movie.vote_average >= 7 %}bg-success{% elif movie.vote_average >= 5 %}bg-warning{% else %}bg-danger{% endif %} me-2">
+                                        <i class="fas fa-star me-1"></i> {{ movie.vote_average }}/10
                                     </span>
                                     {% endif %}
                                     
-                                    <span class="badge bg-{{ 'success' if movie.vote_average >= 7.5 else 'warning' if movie.vote_average >= 6 else 'danger' }} me-2">
-                                        <i class="fas fa-star me-1"></i> {{ movie.vote_average|round(1) }}
+                                    {% if movie.vote_count %}
+                                    <span class="badge bg-info">
+                                        <i class="fas fa-users me-1"></i> {{ "{:,}".format(movie.vote_count) }}
                                     </span>
+                                    {% endif %}
                                 </div>
-                                
-                                <div class="recommendation-overview mt-2">
-                                    <p>{{ movie.overview[:200] + '...' if movie.overview and movie.overview|length > 200 else movie.overview if movie.overview else 'Không có mô tả cho phim này.' }}</p>
-                                </div>
-                                
-                                <div class="mt-3">
-                                    <form action="/recommend" method="post">
-                                        <input type="hidden" name="movie_title" value="{{ movie.original_title }}">
-                                        <button type="submit" class="btn btn-sm btn-primary">
-                                            <i class="fas fa-search me-1"></i> Tìm phim tương tự
-                                        </button>
-                                    </form>
-                                </div>
+                                <p class="recommendation-overview">
+                                    {{ movie.overview[:150] + '...' if movie.overview and movie.overview|length > 150 else movie.overview or "Không có thông tin mô tả." }}
+                                </p>
+                                <form action="/recommend" method="post" class="mt-2">
+                                    <input type="hidden" name="movie_title" value="{{ movie.original_title }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-light btn-recommendation">
+                                        <i class="fas fa-search me-1"></i> Tìm phim tương tự
+                                    </button>
+                                </form>
                             </div>
                         </div>
                     </div>
@@ -217,5 +222,354 @@
         });
     });
     </script>
+    
+    <!-- Thêm nút cập nhật poster vào thẻ selected-movie-card -->
+    {% if selected_movie %}
+    <script>
+        // Tìm thẻ selected-movie-poster và thêm nút cập nhật poster
+        document.addEventListener('DOMContentLoaded', function() {
+            const posterContainer = document.querySelector('.col-md-3.text-center.mb-3.mb-md-0');
+            if (posterContainer) {
+                // Tạo wrapper với positioning relative
+                const wrapper = document.createElement('div');
+                wrapper.className = 'poster-wrapper position-relative';
+                posterContainer.appendChild(wrapper);
+                
+                // Di chuyển poster vào wrapper
+                const poster = document.querySelector('.selected-movie-poster');
+                wrapper.appendChild(poster);
+                
+                // Tạo lớp overlay khi hover
+                const overlay = document.createElement('div');
+                overlay.className = 'poster-overlay d-flex flex-column align-items-center justify-content-center';
+                wrapper.appendChild(overlay);
+                
+                // Tạo icon camera
+                const icon = document.createElement('i');
+                icon.className = 'fas fa-camera fa-2x mb-2 text-light animate__animated animate__fadeIn animate__delay-1s';
+                overlay.appendChild(icon);
+                
+                // Tạo nút cập nhật
+                const updateButton = document.createElement('button');
+                updateButton.className = 'btn btn-sm btn-primary poster-update-btn animate__animated animate__fadeIn animate__delay-1s';
+                updateButton.innerHTML = 'Cập nhật poster';
+                updateButton.setAttribute('data-bs-toggle', 'modal');
+                updateButton.setAttribute('data-bs-target', '#updatePosterModal');
+                overlay.appendChild(updateButton);
+            }
+        });
+    </script>
+
+    <!-- Modal cập nhật poster (thiết kế hiện đại) -->
+    <div class="modal fade" id="updatePosterModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content bg-dark text-white">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title">
+                        <i class="fas fa-photo-film me-2 text-primary"></i>
+                        Cập nhật poster cho "{{ movie_title }}"
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <form id="updatePosterForm">
+                                <div class="mb-4">
+                                    <label for="posterUrl" class="form-label">
+                                        <i class="fas fa-link me-2 text-info"></i>URL hình ảnh poster
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-dark text-light border-secondary">
+                                            <i class="fas fa-globe"></i>
+                                        </span>
+                                        <input type="url" class="form-control bg-dark text-white border-secondary" 
+                                               id="posterUrl" placeholder="https://example.com/image.jpg" required>
+                                    </div>
+                                    <div class="form-text text-light">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Nhập URL của hình ảnh poster (định dạng JPG, PNG, WEBP)
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label class="d-block mb-2">
+                                        <i class="fas fa-upload me-2 text-success"></i>
+                                        Hoặc chọn hình ảnh từ máy tính
+                                    </label>
+                                    <div class="drop-area" id="dropArea">
+                                        <input type="file" id="posterFile" accept="image/*" class="d-none">
+                                        <div class="drop-message text-center py-5">
+                                            <i class="fas fa-cloud-upload-alt fa-3x mb-3 text-info"></i>
+                                            <p>Kéo thả hình ảnh vào đây hoặc <span class="text-info browse-link">chọn file</span></p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <input type="hidden" name="movie_title" value="{{ movie_title }}">
+                            </form>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="preview-section">
+                                <label class="form-label d-flex align-items-center">
+                                    <i class="fas fa-eye me-2 text-warning"></i>Xem trước
+                                </label>
+                                <div class="preview-container">
+                                    <div class="preview-wrapper">
+                                        <img id="posterPreview" src="{{ url_for('static', filename='images/no-poster.jpg') }}" 
+                                             alt="Preview" class="img-fluid poster-preview">
+                                    </div>
+                                    <div class="mt-2 text-muted preview-message text-center">
+                                        <small>Nhập URL hoặc kéo thả hình ảnh để xem trước</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i> Hủy
+                    </button>
+                    <button type="button" class="btn btn-primary" id="saveNewPoster">
+                        <i class="fas fa-save me-1"></i> Lưu poster
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script xử lý cập nhật poster với kéo thả hình ảnh -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const posterUrlInput = document.getElementById('posterUrl');
+        const posterFileInput = document.getElementById('posterFile');
+        const posterPreview = document.getElementById('posterPreview');
+        const previewMessage = document.querySelector('.preview-message');
+        const dropArea = document.getElementById('dropArea');
+        const browseLink = document.querySelector('.browse-link');
+        const saveButton = document.getElementById('saveNewPoster');
+        
+        // Biến để lưu base64 của hình ảnh khi upload file
+        let imageBase64 = null;
+        
+        // Xử lý khi nhấn vào browse link
+        browseLink.addEventListener('click', function() {
+            posterFileInput.click();
+        });
+        
+        // Xử lý khi nhấn vào drop area
+        dropArea.addEventListener('click', function() {
+            posterFileInput.click();
+        });
+        
+        // Xử lý khi kéo file vào drop area
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, function() {
+                dropArea.classList.add('drag-over');
+            });
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, function() {
+                dropArea.classList.remove('drag-over');
+            });
+        });
+        
+        // Xử lý khi thả file vào drop area
+        dropArea.addEventListener('drop', function(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            
+            if (files.length) {
+                handleFiles(files);
+            }
+        });
+        
+        // Xử lý khi chọn file từ file input
+        posterFileInput.addEventListener('change', function() {
+            if (this.files.length) {
+                handleFiles(this.files);
+            }
+        });
+        
+        // Xử lý file ảnh được chọn
+        function handleFiles(files) {
+            const file = files[0];
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    imageBase64 = e.target.result;
+                    posterPreview.src = imageBase64;
+                    // Xóa URL input khi đã chọn file
+                    posterUrlInput.value = '';
+                    previewMessage.innerHTML = `<small class="text-success">Hình ảnh hợp lệ: ${file.name}</small>`;
+                };
+                
+                reader.readAsDataURL(file);
+            } else {
+                previewMessage.innerHTML = `<small class="text-danger">File không phải là hình ảnh</small>`;
+            }
+        }
+        
+        // Hiển thị xem trước khi nhập URL
+        posterUrlInput.addEventListener('input', function() {
+            const url = this.value.trim();
+            if (url) {
+                // Reset base64 nếu đang nhập URL
+                imageBase64 = null;
+                
+                posterPreview.src = url;
+                posterPreview.onerror = function() {
+                    posterPreview.src = "{{ url_for('static', filename='images/no-poster.jpg') }}";
+                    previewMessage.innerHTML = `<small class="text-danger">Không thể tải hình ảnh từ URL này</small>`;
+                };
+                posterPreview.onload = function() {
+                    previewMessage.innerHTML = `<small class="text-success">Hình ảnh hợp lệ</small>`;
+                };
+            } else {
+                posterPreview.src = "{{ url_for('static', filename='images/no-poster.jpg') }}";
+                previewMessage.innerHTML = `<small>Nhập URL hoặc kéo thả hình ảnh để xem trước</small>`;
+            }
+        });
+        
+        // Xử lý khi nhấn nút lưu
+        saveButton.addEventListener('click', function() {
+            // Sử dụng imageBase64 nếu có, ngược lại sử dụng URL
+            const posterSource = imageBase64 || posterUrlInput.value.trim();
+            const movieTitle = "{{ movie_title }}";
+            
+            if (!posterSource) {
+                showToast('Lỗi', 'Vui lòng nhập URL hình ảnh hoặc chọn file ảnh', 'danger');
+                return;
+            }
+            
+            // Hiển thị trạng thái đang tải
+            saveButton.disabled = true;
+            saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xử lý...';
+            
+            // Gửi request lên server
+            const formData = new FormData();
+            formData.append('movie_title', movieTitle);
+            formData.append('poster_url', posterSource);
+            
+            fetch('/update-poster', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Cập nhật poster trên trang
+                    const mainPoster = document.querySelector('.selected-movie-poster');
+                    if (mainPoster) {
+                        mainPoster.src = data.poster_path;
+                    }
+                    
+                    // Hiển thị thông báo thành công
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('updatePosterModal'));
+                    modal.hide();
+                    
+                    // Hiển thị toast thông báo
+                    showToast('Thành công', 'Poster đã được cập nhật', 'success');
+                } else {
+                    showToast('Lỗi', data.message, 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('Lỗi', 'Có lỗi xảy ra khi cập nhật poster', 'danger');
+            })
+            .finally(() => {
+                // Khôi phục nút
+                saveButton.disabled = false;
+                saveButton.innerHTML = '<i class="fas fa-save me-1"></i> Lưu poster';
+            });
+        });
+    });
+
+    // Hàm hiển thị toast thông báo hiện đại
+    function showToast(title, message, type = 'info') {
+        // Tạo element toast nếu chưa có
+        if (!document.getElementById('toastContainer')) {
+            const toastContainer = document.createElement('div');
+            toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+            toastContainer.id = 'toastContainer';
+            document.body.appendChild(toastContainer);
+        }
+        
+        // Tạo toast mới
+        const toastId = `toast-${Date.now()}`;
+        const toast = document.createElement('div');
+        toast.className = `toast border-0 animate__animated animate__fadeInUp`;
+        toast.id = toastId;
+        toast.setAttribute('role', 'alert');
+        toast.setAttribute('aria-live', 'assertive');
+        toast.setAttribute('aria-atomic', 'true');
+        
+        // Xác định icon dựa vào loại thông báo
+        let icon, bgClass;
+        switch(type) {
+            case 'success':
+                icon = 'check-circle';
+                bgClass = 'bg-success';
+                break;
+            case 'danger':
+                icon = 'exclamation-circle';
+                bgClass = 'bg-danger';
+                break;
+            case 'warning':
+                icon = 'exclamation-triangle';
+                bgClass = 'bg-warning text-dark';
+                break;
+            default:
+                icon = 'info-circle';
+                bgClass = 'bg-info';
+        }
+        
+        // Nội dung toast
+        toast.innerHTML = `
+            <div class="toast-header ${bgClass} text-white">
+                <i class="fas fa-${icon} me-2"></i>
+                <strong class="me-auto">${title}</strong>
+                <small>Bây giờ</small>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body bg-dark text-white">
+                ${message}
+            </div>
+        `;
+        
+        // Thêm toast vào container
+        document.getElementById('toastContainer').appendChild(toast);
+        
+        // Hiển thị toast
+        const bsToast = new bootstrap.Toast(toast, {
+            autohide: true,
+            delay: 5000
+        });
+        bsToast.show();
+        
+        // Thêm hiệu ứng khi toast biến mất
+        toast.addEventListener('hidden.bs.toast', function() {
+            toast.classList.remove('animate__fadeInUp');
+            toast.classList.add('animate__fadeOutDown');
+            setTimeout(() => {
+                toast.remove();
+            }, 500);
+        });
+    }
+    </script>
+    {% endif %}
 </body>
 </html>

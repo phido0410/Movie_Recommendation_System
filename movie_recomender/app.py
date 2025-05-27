@@ -3,10 +3,21 @@ import os
 import json
 from recommender import MovieRecommender
 import pandas as pd
+import uuid
+import re
+import io
+import base64
+import requests
+from PIL import Image
 
 app = Flask(__name__)
 app.config['TITLE'] = 'CineMatch'
 app.config['PORT'] = 6789  # Port tùy chỉnh, không còn dùng 5000 mặc định
+
+# Đảm bảo thư mục để lưu trữ poster tồn tại
+poster_dir = os.path.join(app.root_path, 'static/posters')
+if not os.path.exists(poster_dir):
+    os.makedirs(poster_dir)
 
 # Khởi tạo recommender system
 recommender = MovieRecommender()
@@ -208,6 +219,109 @@ def search():
     
     # Trả về kết quả dưới dạng JSON
     return jsonify(matching_movies.to_dict('records'))
+
+# Hàm để chuẩn hóa tên file
+def slugify(text):
+    # Chuyển đổi thành chữ thường và thay thế dấu cách bằng gạch dưới
+    text = text.lower().replace(' ', '_')
+    # Loại bỏ các ký tự không hợp lệ cho tên file
+    text = re.sub(r'[^\w\-]', '', text)
+    # Nếu tên file quá dài, cắt bớt
+    if len(text) > 50:
+        text = text[:50]
+    # Đảm bảo tên file không trống
+    if not text:
+        text = 'movie'
+    return text
+
+# Thêm route để cập nhật poster cho phim
+@app.route('/update-poster', methods=['POST'])
+def update_poster():
+    movie_title = request.form.get('movie_title', '')
+    poster_url = request.form.get('poster_url', '')
+    
+    if not movie_title or not poster_url:
+        return jsonify({
+            'success': False, 
+            'message': 'Thiếu thông tin cần thiết'
+        })
+    
+    try:
+        # Kiểm tra xem phim có tồn tại trong hệ thống không
+        if movie_title not in recommender.movies_df['original_title'].values:
+            return jsonify({
+                'success': False, 
+                'message': f'Không tìm thấy phim: {movie_title}'
+            })
+        
+        # Tạo tên file từ tên phim
+        secure_filename = f"{slugify(movie_title)}.jpg"
+        
+        # Nếu file đã tồn tại, thêm UUID để tránh trùng lặp
+        if os.path.exists(os.path.join(app.root_path, 'static/posters', secure_filename)):
+            secure_filename = f"{slugify(movie_title)}_{uuid.uuid4().hex[:8]}.jpg"
+            
+        poster_path = os.path.join(app.root_path, 'static/posters', secure_filename)
+        
+        # Kiểm tra xem có phải là URL dạng base64 không
+        if poster_url.startswith('data:image'):
+            # Xử lý URL dạng base64
+            try:
+                # Tách phần dữ liệu base64 từ URL
+                base64_data = re.sub('^data:image/.+;base64,', '', poster_url)
+                # Giải mã dữ liệu base64
+                image_data = base64.b64decode(base64_data)
+                # Tạo đối tượng hình ảnh
+                img = Image.open(io.BytesIO(image_data))
+                # Lưu ảnh
+                img.save(poster_path)
+            except Exception as e:
+                return jsonify({
+                    'success': False,
+                    'message': f'Không thể xử lý hình ảnh base64: {str(e)}'
+                })
+        else:
+            # Xử lý URL thông thường
+            try:
+                # Tải ảnh từ URL
+                response = requests.get(poster_url, stream=True)
+                if response.status_code != 200:
+                    return jsonify({
+                        'success': False, 
+                        'message': 'Không thể tải ảnh từ URL đã cung cấp'
+                    })
+                
+                # Lưu ảnh
+                img = Image.open(io.BytesIO(response.content))
+                img.save(poster_path)
+            except Exception as e:
+                return jsonify({
+                    'success': False,
+                    'message': f'Không thể tải ảnh từ URL: {str(e)}'
+                })
+        
+        # Cập nhật dữ liệu poster trong JSON file
+        global poster_mapping
+        poster_mapping[movie_title] = secure_filename
+        
+        # Lưu cập nhật vào file JSON
+        poster_file = os.path.join(app.root_path, 'static/data/movie-poster.json')
+        os.makedirs(os.path.dirname(poster_file), exist_ok=True)
+        with open(poster_file, 'w', encoding='utf-8') as f:
+            json.dump(poster_mapping, f, ensure_ascii=False, indent=4)
+        
+        return jsonify({
+            'success': True, 
+            'message': 'Cập nhật poster thành công',
+            'poster_path': url_for('static', filename=f'posters/{secure_filename}')
+        })
+        
+    except Exception as e:
+        print(f"Error updating poster: {str(e)}")
+        return jsonify({
+            'success': False, 
+            'message': f'Có lỗi xảy ra: {str(e)}'
+        })
 
 # Serving favicon.ico
 @app.route('/favicon.ico')

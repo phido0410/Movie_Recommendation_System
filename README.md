@@ -152,8 +152,9 @@ python app.py
 
 ## 👤 Tác giả
 
-- **Đỗ Ngọc Phi** - MSSV: 2221050848  
-- **GVHD**: Thầy Đặng Văn Nam  
+- **Đỗ Ngọc Phi** - MSSV: 2221050848
+- **Nguyễn Minh Quân** - MSSV: 2221050125
+- **GVHD**: Thầy Đặng Văn Nam, Cô Dương Thị Hiền Thanh  
   _Khoa CNTT - Trường ĐH Mỏ - Địa chất_
 
 ---

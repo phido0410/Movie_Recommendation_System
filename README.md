@@ -7,7 +7,7 @@
 
 ## 📌 Giới thiệu
 
-**CineMatch** là một hệ thống gợi ý phim thông minh sử dụng thuật toán học máy để phân tích nội dung phim và đề xuất những bộ phim phù hợp với sở thích của người dùng. Khác với các hệ thống truyền thống chỉ dựa vào thể loại hoặc diễn viên, CineMatch tập trung vào nội dung tóm tắt để tìm các bộ phim tương đồng.
+**CineMatch** là một hệ thống đề xuất phim thông minh sử dụng các thuật toán trí tuệ nhân tạo để phân tích nội dung phim và đưa ra những đề xuất phù hợp nhất với sở thích của bạn.
 
 ---
 
@@ -143,10 +143,10 @@ python app.py
 
 | Thông tin             | Giá trị              |
 |----------------------|----------------------|
-| Số lượng phim        | ~11,700+             |
-| Giai đoạn phát hành  | 1916 - 2017          |
-| Điểm đánh giá TB     | 6.4/10               |
-| Lượt đánh giá TB     | ~200/phim            |
+| Số lượng phim        | 11756                |
+| Giai đoạn phát hành  | 1085 - 2020          |
+| Điểm đánh giá TB     | 6.3/10               |
+| Lượt đánh giá TB     | 396/phim             |
 
 ---
 

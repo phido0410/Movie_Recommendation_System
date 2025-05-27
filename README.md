@@ -2,7 +2,7 @@
 # 🎬 CineMatch - Hệ thống đề xuất phim dựa trên nội dung
 
 <p align="center">
-  <img src="Pic/pic1.png" alt="CineMatch Logo" width="200"/>
+  <img src="Pic/picreadme.png" alt="CineMatch Logo" width="200"/>
 </p>
 
 ## 📌 Giới thiệu

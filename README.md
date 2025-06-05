@@ -154,6 +154,7 @@ python app.py
 
 - **Đỗ Ngọc Phi** - MSSV: 2221050848
 - **Nguyễn Minh Quân** - MSSV: 2221050125
+- **Đào Anh Tú** - 2221050231
 - **GVHD**: Thầy Đặng Văn Nam, Cô Dương Thị Hiền Thanh  
   _Khoa CNTT - Trường ĐH Mỏ - Địa chất_
 
